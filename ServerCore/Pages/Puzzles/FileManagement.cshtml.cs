@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +43,10 @@ namespace ServerCore.Pages.Puzzles
 
         [BindProperty]
         public List<int> SelectedFiles { get; set; }
+
+        public string UploadErrorString = "test";
+
+        const string SharedResourceDirectoryName = "resources";
 
         /// <summary>
         /// Handler for listing files
@@ -287,11 +290,25 @@ namespace ServerCore.Pages.Puzzles
             return _context.Puzzles.Any(e => e.ID == puzzleId);
         }
 
+
         /// <summary>
         /// Helper for taking an uploaded form file, uploading it, and tracking it in the database
         /// </summary>
         private async Task UploadFileAsync(IFormFile uploadedFile, ContentFileType fileType)
         {
+            if (await FileManager.FileAlreadyExistsWithName(uploadedFile.FileName, this.Event.ID, SharedResourceDirectoryName))
+            {
+                //await Response.WriteAsync("<script>alert('This file name has already been used.  Please try again with a unique file name.');</script>");
+                ModelState.AddModelError("nope", "new filename");
+                UploadErrorString = "new filename pls";
+
+                return;
+            }
+            else
+            {
+              //  UploadErrorString = "";
+            }
+
             if ((fileType == ContentFileType.PuzzleMaterial || fileType == ContentFileType.SolveToken) &&
                 Path.GetExtension(uploadedFile.FileName).Equals(".zip", StringComparison.OrdinalIgnoreCase) && ExpandZipFiles)
             {

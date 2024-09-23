@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using ServerCore.DataModel;
@@ -187,6 +188,14 @@ namespace ServerCore
             {
                 return CloudStorageAccount.Parse(ConnectionString);
             }
+        }
+
+        public static async Task<bool> FileAlreadyExistsWithName(string fileName, int eventId, string puzzleDirectoryName)
+        {
+            CloudBlobDirectory directory = await GetPuzzleDirectoryAsync(eventId, puzzleDirectoryName);
+            List<DirectoryFileResult> contents = await GetDirectoryContents(eventId, "");
+            var existing = contents.Where(item => item.Name.EndsWith("/" + fileName));
+            return !existing.IsNullOrEmpty();
         }
     }
 
